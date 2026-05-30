@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>ESP32 Power Monitor</title>
+
+<style>
+
+.switch{
+  position:relative;
+  display:inline-block;
+  width:70px;
+  height:36px;
+}
+
+.switch input{
+  opacity:0;
+  width:0;
+  height:0;
+}
+
+.slider{
+  position:absolute;
+  cursor:pointer;
+  top:0;
+  left:0;
+  right:0;
+  bottom:0;
+  background:#ccc;
+  transition:.4s;
+  border-radius:34px;
+}
+
+.slider:before{
+  position:absolute;
+  content:"";
+  height:28px;
+  width:28px;
+  left:4px;
+  bottom:4px;
+  background:white;
+  transition:.4s;
+  border-radius:50%;
+}
+
+input:checked + .slider{
+  background:#00ff88;
+}
+
+input:checked + .slider:before{
+  transform:translateX(34px);
+}
+
+body{
+  margin:0;
+  font-family:'Segoe UI',sans-serif;
+  background:linear-gradient(135deg,#5f6caf,#7f53ac,#647dee);
+  color:#fff;
+  text-align:center;
+}
+
+#loader{
+  position:fixed;
+  width:100%;
+  height:100%;
+  background:#0f2027;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  z-index:9999;
+}
+
+.progress-container{
+  width:70%;
+  height:10px;
+  background:#333;
+  border-radius:10px;
+  overflow:hidden;
+  margin-top:20px;
+}
+
+.progress-bar{
+  height:100%;
+  width:0%;
+  background:lime;
+  animation:load 2s linear forwards;
+}
+
+@keyframes load{
+  from{width:0%;}
+  to{width:100%;}
+}
+
+h2{
+  padding:15px;
+  font-weight:500;
+}
+
+.container{
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center;
+}
+
+.card{
+  background:#f5f5f5;
+  color:#333;
+  width:220px;
+  margin:15px;
+  padding:20px;
+  border-radius:20px;
+  box-shadow:0 10px 25px rgba(0,0,0,0.3);
+}
+
+.battery-box{
+  width:80%;
+  margin:20px auto;
+  background:#333;
+  border-radius:15px;
+}
+
+.battery-fill{
+  height:25px;
+  width:0%;
+  background:lime;
+}
+
+.warning{
+  color:red;
+  font-weight:bold;
+  animation:blink 1s infinite;
+}
+
+@keyframes blink{
+  50%{opacity:0;}
+}
+
+.footer{
+  margin-top:20px;
+  font-size:12px;
+  opacity:0.6;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div id="loader">
+
+  <h1>&#9889; ESP32 SYSTEM BOOTING</h1>
+
+  <div class="progress-container">
+    <div class="progress-bar"></div>
+  </div>
+
+</div>
+
+<h2>&#9889; Real-time Power Monitoring</h2>
+
+<div style="margin:15px;">
+  <img id="qr" width="130">
+</div>
+
+<div style="margin:25px;">
+
+<h3>Motor Control</h3>
+
+<label class="switch">
+  <input type="checkbox" id="motorToggle" onchange="toggleMotor()">
+  <span class="slider"></span>
+</label>
+
+<div style="margin-top:10px;" id="motorStatus">
+Motor OFF
+</div>
+
+<br><br>
+
+<input type="range"
+       min="0"
+       max="255"
+       value="0"
+       id="speedSlider"
+       style="width:300px;"
+       oninput="updateMotor(this.value)"
+       disabled>
+
+<div id="speedValue">Speed: 0</div>
+
+</div>
+
+<div class="container">
+
+<div class="card">
+&#128268;
+<div id="v">--</div>
+Voltage
+</div>
+
+<div class="card">
+&#9889;
+<div id="c">--</div>
+Current
+</div>
+
+<div class="card">
+&#128161;
+<div id="p">--</div>
+Power
+</div>
+
+<div class="card">
+&#128267;
+<div id="b">--</div>
+Battery
+</div>
+
+</div>
+
+<div class="battery-box">
+  <div id="bar" class="battery-fill"></div>
+</div>
+
+<div id="alert"></div>
+
+<div class="footer">
+
+ESP32 IoT Power Monitor<br>
+
+Made by Marshal Basumatary
+
+</div>
+
+<script>
+
+window.addEventListener("load", function(){
+
+  setTimeout(function(){
+
+    document.getElementById("loader").style.display = "none";
+
+  }, 2000);
+});
+
+let motorEnabled = false;
+
+function toggleMotor(){
+
+  motorEnabled =
+  document.getElementById("motorToggle").checked;
+
+  let slider =
+  document.getElementById("speedSlider");
+
+  if(motorEnabled){
+
+    slider.disabled = false;
+
+    document.getElementById("motorStatus").innerHTML =
+    "Motor ON";
+
+    updateMotor(slider.value);
+  }
+
+  else{
+
+    slider.disabled = true;
+
+    document.getElementById("motorStatus").innerHTML =
+    "Motor OFF";
+
+    fetch("/speed?value=0");
+
+    document.getElementById("speedValue").innerHTML =
+    "Speed: 0";
+  }
+}
+
+function updateMotor(value){
+
+  if(!motorEnabled) return;
+
+  document.getElementById("speedValue").innerHTML =
+  "Speed: " + value;
+
+  fetch("/speed?value=" + value);
+}
+
+// ================= QR =================
+window.onload = function(){
+
+  var ip = window.location.href;
+
+  document.getElementById("qr").src =
+  "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=" + ip;
+};
+
+// ================= LIVE DATA =================
+setInterval(function(){
+
+fetch('/data')
+
+.then(res => res.json())
+
+.then(data => {
+
+  document.getElementById('v').innerHTML =
+  data.voltage.toFixed(2) + " V";
+
+  document.getElementById('c').innerHTML =
+  data.current.toFixed(1) + " mA";
+
+  document.getElementById('p').innerHTML =
+  data.power.toFixed(1) + " mW";
+
+  document.getElementById('b').innerHTML =
+  data.battery.toFixed(0) + " %";
+
+  let percent = data.battery;
+
+  let bar = document.getElementById('bar');
+
+  bar.style.width = percent + "%";
+
+  if(percent > 50)
+    bar.style.background = "lime";
+
+  else if(percent > 20)
+    bar.style.background = "orange";
+
+  else
+    bar.style.background = "red";
+
+  if(percent < 20){
+
+    document.getElementById('alert').innerHTML =
+    "<div class='warning'>&#9888; LOW BATTERY</div>";
+  }
+
+  else{
+
+    document.getElementById('alert').innerHTML = "";
+  }
+
+});
+
+}, 1000);
+
+</script>
+
+</body>
+</html>

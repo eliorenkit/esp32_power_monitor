@@ -206,6 +206,12 @@ Power
 Battery
 </div>
 
+<div class="card">
+⚡
+<div id="psm">--</div>
+PSM
+</div>
+  
 </div>
 
 <div class="battery-box">
@@ -256,7 +262,9 @@ fetch(`https://api.thingspeak.com/channels/${channelID}/feeds/last.json?api_key=
 let current = parseFloat(data.field2) || 0;
 let power = parseFloat(data.field3) || 0;
 let battery = parseFloat(data.field4) || 0;
-
+let psm = parseFloat(data.field7) || 0;
+document.getElementById("psm").innerHTML = psm.toFixed(2);
+  
   let motorStatus = data.field5 || "0";
 let speed = data.field6 || "0";
 

@@ -199,11 +199,7 @@ fetch(`https://api.thingspeak.com/channels/${channelID}/feeds/last.json?api_key=
   let power   = parseFloat(data.field3) || 0;
   let battery = parseFloat(data.field4) || 0;
 
-  let motorStatus = data.field5 || "0";
-  let speed = data.field6 || "0";
-
-  document.getElementById("motorStatus").innerHTML =
-    (motorStatus == "1") ? "Motor ON" : "Motor OFF";
+  let speed = parseFloat(data.field5) || 0;
 
   document.getElementById("speedValue").innerHTML =
     "Speed: " + speed;

@@ -306,26 +306,30 @@ window.onload = function(){
 // ================= LIVE DATA =================
 setInterval(function(){
 
-fetch('/data')
+fetch(`https://api.thingspeak.com/channels/${channelID}/feeds/last.json?api_key=${readAPIKey}`)
 
 .then(res => res.json())
 
 .then(data => {
 
-  document.getElementById('v').innerHTML =
-  data.voltage.toFixed(2) + " V";
+  let voltage = parseFloat(data.field1) || 0;
+let current = parseFloat(data.field2) || 0;
+let power = parseFloat(data.field3) || 0;
+let battery = parseFloat(data.field4) || 0;
 
-  document.getElementById('c').innerHTML =
-  data.current.toFixed(1) + " mA";
+document.getElementById('v').innerHTML =
+voltage.toFixed(2) + " V";
 
-  document.getElementById('p').innerHTML =
-  data.power.toFixed(1) + " mW";
+document.getElementById('c').innerHTML =
+current.toFixed(1) + " mA";
 
-  document.getElementById('b').innerHTML =
-  data.battery.toFixed(0) + " %";
+document.getElementById('p').innerHTML =
+power.toFixed(1) + " mW";
 
-  let percent = data.battery;
+document.getElementById('b').innerHTML =
+battery.toFixed(0) + " %";
 
+let percent = battery;
   let bar = document.getElementById('bar');
 
   bar.style.width = percent + "%";

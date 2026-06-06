@@ -370,7 +370,51 @@ let percent = battery;
 
 }, 1000);
 
+function loadHistory(){
+
+fetch(`https://api.thingspeak.com/channels/3374066/feeds.json?api_key=Z4HLTM38PBCBFQU7&results=10`)
+
+.then(response => response.json())
+
+.then(data => {
+
+let table = document.getElementById("historyTable");
+
+while(table.rows.length > 1){
+  table.deleteRow(1);
+}
+
+data.feeds.reverse().forEach(feed => {
+
+  let row = table.insertRow();
+
+  row.insertCell(0).innerHTML =
+  new Date(feed.created_at).toLocaleString();
+
+  row.insertCell(1).innerHTML =
+  feed.field1 || "--";
+
+  row.insertCell(2).innerHTML =
+  feed.field2 || "--";
+
+  row.insertCell(3).innerHTML =
+  feed.field3 || "--";
+
+  row.insertCell(4).innerHTML =
+  feed.field4 || "--";
+
+});
+
+});
+
+}
+
+loadHistory();
+
+setInterval(loadHistory,30000);
+  
 </script>
+  
 
 </body>
 </html>

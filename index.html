@@ -297,6 +297,15 @@ let current = parseFloat(data.field2) || 0;
 let power = parseFloat(data.field3) || 0;
 let battery = parseFloat(data.field4) || 0;
 
+  let motorStatus = data.field5 || "0";
+let speed = data.field6 || "0";
+
+document.getElementById("motorStatus").innerHTML =
+  (motorStatus == "1") ? "Motor ON" : "Motor OFF";
+
+document.getElementById("speedValue").innerHTML =
+  "Speed: " + speed;
+  
 document.getElementById('v').innerHTML =
 voltage.toFixed(2) + " V";
 

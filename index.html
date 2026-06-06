@@ -372,11 +372,13 @@ let percent = battery;
 
 function loadHistory(){
 
-fetch(`https://api.thingspeak.com/channels/3374066/feeds.json?api_key=Z4HLTM38PBCBFQU7&results=10`)
+fetch("https://api.thingspeak.com/channels/3374066/feeds.json?api_key=Z4HLTM38PBCBFQU7&results=10")
 
 .then(response => response.json())
 
 .then(data => {
+
+console.log(data);
 
 let table = document.getElementById("historyTable");
 
@@ -384,12 +386,25 @@ while(table.rows.length > 1){
   table.deleteRow(1);
 }
 
+if(!data.feeds || data.feeds.length === 0){
+
+  let row = table.insertRow();
+
+  row.insertCell(0).innerHTML = "No Data";
+  row.insertCell(1).innerHTML = "-";
+  row.insertCell(2).innerHTML = "-";
+  row.insertCell(3).innerHTML = "-";
+  row.insertCell(4).innerHTML = "-";
+
+  return;
+}
+
 data.feeds.reverse().forEach(feed => {
 
   let row = table.insertRow();
 
   row.insertCell(0).innerHTML =
-  new Date(feed.created_at).toLocaleString();
+  feed.created_at;
 
   row.insertCell(1).innerHTML =
   feed.field1 || "--";
@@ -405,14 +420,15 @@ data.feeds.reverse().forEach(feed => {
 
 });
 
+})
+
+.catch(error => {
+
+console.error("ThingSpeak Error:", error);
+
 });
 
-}
-
-loadHistory();
-
-setInterval(loadHistory,30000);
-  
+}  
 </script>
   
 

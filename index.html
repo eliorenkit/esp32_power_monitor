@@ -272,47 +272,7 @@ window.addEventListener("load", function(){
 });
 let motorEnabled = false;
 
-function toggleMotor(){
 
-  motorEnabled =
-  document.getElementById("motorToggle").checked;
-
-  let slider =
-  document.getElementById("speedSlider");
-
-  if(motorEnabled){
-
-    slider.disabled = false;
-
-    document.getElementById("motorStatus").innerHTML =
-    "Motor ON";
-
-    updateMotor(slider.value);
-  }
-
-  else{
-
-    slider.disabled = true;
-
-    document.getElementById("motorStatus").innerHTML =
-    "Motor OFF";
-
-    fetch("/speed?value=0");
-
-    document.getElementById("speedValue").innerHTML =
-    "Speed: 0";
-  }
-}
-
-function updateMotor(value){
-
-  if(!motorEnabled) return;
-
-  document.getElementById("speedValue").innerHTML =
-  "Speed: " + value;
-
-  fetch("/speed?value=" + value);
-}
 
 // ================= QR =================
 window.onload = function(){

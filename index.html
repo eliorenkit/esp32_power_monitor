@@ -2,57 +2,10 @@
 <html>
 
 <head>
-
 <meta name="viewport" content="width=device-width, initial-scale=1">
-
 <title>ESP32 Power Monitor</title>
 
 <style>
-
-.switch{
-  position:relative;
-  display:inline-block;
-  width:70px;
-  height:36px;
-}
-
-.switch input{
-  opacity:0;
-  width:0;
-  height:0;
-}
-
-.slider{
-  position:absolute;
-  cursor:pointer;
-  top:0;
-  left:0;
-  right:0;
-  bottom:0;
-  background:#ccc;
-  transition:.4s;
-  border-radius:34px;
-}
-
-.slider:before{
-  position:absolute;
-  content:"";
-  height:28px;
-  width:28px;
-  left:4px;
-  bottom:4px;
-  background:white;
-  transition:.4s;
-  border-radius:50%;
-}
-
-input:checked + .slider{
-  background:#00ff88;
-}
-
-input:checked + .slider:before{
-  transform:translateX(34px);
-}
 
 body{
   margin:0;
@@ -62,6 +15,7 @@ body{
   text-align:center;
 }
 
+/* Loader */
 #loader{
   position:fixed;
   width:100%;
@@ -95,11 +49,7 @@ body{
   to{width:100%;}
 }
 
-h2{
-  padding:15px;
-  font-weight:500;
-}
-
+/* Cards */
 .container{
   display:flex;
   flex-wrap:wrap;
@@ -116,6 +66,7 @@ h2{
   box-shadow:0 10px 25px rgba(0,0,0,0.3);
 }
 
+/* Battery */
 .battery-box{
   width:80%;
   margin:20px auto;
@@ -129,6 +80,7 @@ h2{
   background:lime;
 }
 
+/* Warning */
 .warning{
   color:red;
   font-weight:bold;
@@ -146,77 +98,62 @@ h2{
 }
 
 </style>
-
 </head>
 
 <body>
 
+<!-- LOADER -->
 <div id="loader">
-
-  <h1>&#9889; ESP32 SYSTEM BOOTING</h1>
-
+  <h1>⚡ ESP32 SYSTEM BOOTING</h1>
   <div class="progress-container">
     <div class="progress-bar"></div>
+  </div>
+</div>
+
+<h2>⚡ Real-time Power Monitoring</h2>
+
+<!-- QR -->
+<div>
+  <img id="qr" width="130">
+</div>
+
+<!-- MOTOR STATUS -->
+<h3>Motor Status</h3>
+<div id="motorStatus">Motor OFF</div>
+<div id="speedValue">Speed: 0</div>
+
+<!-- CARDS -->
+<div class="container">
+
+  <div class="card">
+    🔋<div id="v">--</div> Voltage
+  </div>
+
+  <div class="card">
+    ⚡<div id="c">--</div> Current
+  </div>
+
+  <div class="card">
+    💡<div id="p">--</div> Power
+  </div>
+
+  <div class="card">
+    🔋<div id="b">--</div> Battery
   </div>
 
 </div>
 
-<h2>&#9889; Real-time Power Monitoring</h2>
-
-<div style="margin:15px;">
-  <img id="qr" width="130">
-</div>
-
-<div style="margin:25px;">
-
-
-  <h3>Motor Status</h3>
-
-<div id="motorStatus" style="font-size:18px;font-weight:bold;">
-Motor OFF
-</div>
-
-<div id="speedValue" style="margin-top:10px;">
-Speed: 0
-</div>
-
-<div class="container">
-
-<div class="card">
-&#128268;
-<div id="v">--</div>
-Voltage
-</div>
-
-<div class="card">
-&#9889;
-<div id="c">--</div>
-Current
-</div>
-
-<div class="card">
-&#128161;
-<div id="p">--</div>
-Power
-</div>
-
-<div class="card">
-&#128267;
-<div id="b">--</div>
-Battery
-</div>
-
-</div>
-
+<!-- BATTERY BAR -->
 <div class="battery-box">
   <div id="bar" class="battery-fill"></div>
 </div>
 
 <div id="alert"></div>
 
-  <h3>Last 10 Records</h3>
+<h3>Last 10 Records</h3>
 
-<table id="historyTable" border="1" style="width:95%;margin:auto;background:white;color:black;">
+<table id="historyTable" border="1"
+style="width:95%;margin:auto;background:white;color:black;">
 <tr>
 <th>Time</th>
 <th>Voltage</th>
@@ -227,11 +164,8 @@ Battery
 </table>
 
 <div class="footer">
-
 ESP32 IoT Power Monitor<br>
-
 Made by Marshal Basumatary
-
 </div>
 
 <script>
@@ -239,148 +173,100 @@ Made by Marshal Basumatary
 const channelID = "3374066";
 const readAPIKey = "Z4HLTM38PBCBFQU7";
 
-let motorEnabled = false;
+// ================= LOAD =================
+window.addEventListener("load", function () {
 
-  
+  setTimeout(function () {
+    document.getElementById("loader").style.display = "none";
+  }, 2000);
+
+  document.getElementById("qr").src =
+    "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=" +
+    encodeURIComponent(window.location.href);
+
+  loadHistory();
+});
 
 // ================= LIVE DATA =================
-setInterval(function(){
+setInterval(function () {
 
 fetch(`https://api.thingspeak.com/channels/${channelID}/feeds/last.json?api_key=${readAPIKey}`)
-
 .then(res => res.json())
-
 .then(data => {
 
   let voltage = parseFloat(data.field1) || 0;
-let current = parseFloat(data.field2) || 0;
-let power = parseFloat(data.field3) || 0;
-let battery = parseFloat(data.field4) || 0;
+  let current = parseFloat(data.field2) || 0;
+  let power   = parseFloat(data.field3) || 0;
+  let battery = parseFloat(data.field4) || 0;
 
   let motorStatus = data.field5 || "0";
-let speed = data.field6 || "0";
+  let speed = data.field6 || "0";
 
-document.getElementById("motorStatus").innerHTML =
-  (motorStatus == "1") ? "Motor ON" : "Motor OFF";
+  document.getElementById("motorStatus").innerHTML =
+    (motorStatus == "1") ? "Motor ON" : "Motor OFF";
 
-document.getElementById("speedValue").innerHTML =
-  "Speed: " + speed;
-  
-document.getElementById('v').innerHTML =
-voltage.toFixed(2) + " V";
+  document.getElementById("speedValue").innerHTML =
+    "Speed: " + speed;
 
-document.getElementById('c').innerHTML =
-current.toFixed(1) + " mA";
+  document.getElementById("v").innerHTML = voltage.toFixed(2) + " V";
+  document.getElementById("c").innerHTML = current.toFixed(1) + " mA";
+  document.getElementById("p").innerHTML = power.toFixed(1) + " mW";
+  document.getElementById("b").innerHTML = battery.toFixed(0) + " %";
 
-document.getElementById('p').innerHTML =
-power.toFixed(1) + " mW";
+  let bar = document.getElementById("bar");
+  bar.style.width = battery + "%";
 
-document.getElementById('b').innerHTML =
-battery.toFixed(0) + " %";
+  if(battery > 50) bar.style.background = "lime";
+  else if(battery > 20) bar.style.background = "orange";
+  else bar.style.background = "red";
 
-let percent = battery;
-  let bar = document.getElementById('bar');
-
-  bar.style.width = percent + "%";
-
-  if(percent > 50)
-    bar.style.background = "lime";
-
-  else if(percent > 20)
-    bar.style.background = "orange";
-
-  else
-    bar.style.background = "red";
-
-  if(percent < 20){
-
-    document.getElementById('alert').innerHTML =
-    "<div class='warning'>&#9888; LOW BATTERY</div>";
-  }
-
-  else{
-
-    document.getElementById('alert').innerHTML = "";
-  }
+  document.getElementById("alert").innerHTML =
+    (battery < 20) ? "<div class='warning'>⚠ LOW BATTERY</div>" : "";
 
 });
 
-}, 1000);
+}, 2000);
 
+// ================= HISTORY =================
 function loadHistory(){
 
-fetch("https://api.thingspeak.com/channels/3374066/feeds.json?api_key=Z4HLTM38PBCBFQU7&results=10")
-
-.then(response => response.json())
-
+fetch(`https://api.thingspeak.com/channels/${channelID}/feeds.json?api_key=${readAPIKey}&results=10`)
+.then(res => res.json())
 .then(data => {
 
-console.log(data);
+  let table = document.getElementById("historyTable");
 
-let table = document.getElementById("historyTable");
+  while(table.rows.length > 1){
+    table.deleteRow(1);
+  }
 
-while(table.rows.length > 1){
-  table.deleteRow(1);
+  if(!data.feeds || data.feeds.length === 0){
+    let row = table.insertRow();
+    row.insertCell(0).innerHTML = "No Data";
+    row.insertCell(1).innerHTML = "-";
+    row.insertCell(2).innerHTML = "-";
+    row.insertCell(3).innerHTML = "-";
+    row.insertCell(4).innerHTML = "-";
+    return;
+  }
+
+  data.feeds.reverse().forEach(feed => {
+
+    let row = table.insertRow();
+
+    row.insertCell(0).innerHTML = feed.created_at;
+    row.insertCell(1).innerHTML = feed.field1 || "--";
+    row.insertCell(2).innerHTML = feed.field2 || "--";
+    row.insertCell(3).innerHTML = feed.field3 || "--";
+    row.insertCell(4).innerHTML = feed.field4 || "--";
+
+  });
+
+});
+
 }
 
-if(!data.feeds || data.feeds.length === 0){
-
-  let row = table.insertRow();
-
-  row.insertCell(0).innerHTML = "No Data";
-  row.insertCell(1).innerHTML = "-";
-  row.insertCell(2).innerHTML = "-";
-  row.insertCell(3).innerHTML = "-";
-  row.insertCell(4).innerHTML = "-";
-
-  return;
-}
-
-data.feeds.reverse().forEach(feed => {
-
-  let row = table.insertRow();
-
-  row.insertCell(0).innerHTML =
-  feed.created_at;
-
-  row.insertCell(1).innerHTML =
-  feed.field1 || "--";
-
-  row.insertCell(2).innerHTML =
-  feed.field2 || "--";
-
-  row.insertCell(3).innerHTML =
-  feed.field3 || "--";
-
-  row.insertCell(4).innerHTML =
-  feed.field4 || "--";
-
-});
-
-})
-
-.catch(error => {
-
-console.error("ThingSpeak Error:", error);
-
-});
-
-}  
-
-  window.addEventListener("load", function () {
-
-  // QR code
-  var ip = window.location.href;
-  document.getElementById("qr").src =
-  "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=" + ip;
-
-  // Load history table
-  loadHistory();
-
-});
-  
 </script>
-  
 
 </body>
 </html>

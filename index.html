@@ -183,11 +183,15 @@ window.addEventListener("load", function () {
     "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=" +
     encodeURIComponent(window.location.href);
 
-  loadHistory();
+  loadLiveData();
+loadHistory();
+
+setInterval(loadLiveData, 1000);
+setInterval(loadHistory, 1000);
 });
 
 // ================= LIVE DATA =================
-setInterval(function () {
+function loadLiveData(){
 
 fetch(`https://api.thingspeak.com/channels/${channelID}/feeds/last.json?api_key=${readAPIKey}`)
 .then(res => res.json())
@@ -197,11 +201,9 @@ fetch(`https://api.thingspeak.com/channels/${channelID}/feeds/last.json?api_key=
   let current = parseFloat(data.field2) || 0;
   let power   = parseFloat(data.field3) || 0;
   let battery = parseFloat(data.field4) || 0;
+  let speed   = parseFloat(data.field5) || 0;
 
-let speed = parseFloat(data.field5) || 0;
-
-document.getElementById("s").innerHTML =
-    speed.toFixed(0);
+  document.getElementById("s").innerHTML = speed.toFixed(0);
 
   document.getElementById("v").innerHTML = voltage.toFixed(2) + " V";
   document.getElementById("c").innerHTML = current.toFixed(1) + " mA";
@@ -220,8 +222,7 @@ document.getElementById("s").innerHTML =
 
 });
 
-}, 1000);
-
+}
 // ================= HISTORY =================
 function loadHistory(){
 

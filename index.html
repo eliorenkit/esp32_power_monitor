@@ -374,6 +374,19 @@ console.error("ThingSpeak Error:", error);
 });
 
 }  
+
+  window.addEventListener("load", function () {
+
+  // QR code
+  var ip = window.location.href;
+  document.getElementById("qr").src =
+  "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=" + ip;
+
+  // Load history table
+  loadHistory();
+
+});
+  
 </script>
   
 

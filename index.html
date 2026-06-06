@@ -140,6 +140,10 @@ body{
     🔋<div id="b">--</div> Battery
   </div>
 
+  <div class="card">
+    🚀<div id="s">--</div> Speed
+  </div>
+
 </div>
 
 <!-- BATTERY BAR -->
@@ -200,8 +204,7 @@ fetch(`https://api.thingspeak.com/channels/${channelID}/feeds/last.json?api_key=
 
   let speed = parseFloat(data.field5) || 0;
 
-  document.getElementById("speedValue").innerHTML =
-    "Speed: " + speed;
+ document.getElementById("s").innerHTML = speed.toFixed(0) + " RPM";
 
   document.getElementById("v").innerHTML = voltage.toFixed(2) + " V";
   document.getElementById("c").innerHTML = current.toFixed(1) + " mA";
